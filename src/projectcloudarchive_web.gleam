@@ -2,7 +2,11 @@
 /// If it works it works
 ///
 import gleam/erlang/process
+import gleam/http/request
 import gleam/http/response.{type Response}
+import gleam/list
+import gleam/option
+import gleam/result
 import gleam/string_tree
 import lustre/attribute as a
 import lustre/element
@@ -46,8 +50,9 @@ fn handle_request(req: wisp.Request) -> wisp.Response {
     [] -> home_page()
     ["about"] -> about_page()
     ["list", "dolls"] -> dolls_list_page()
-    ["dolls", id] -> doll_page(id)
+    ["dolls", id] -> doll_page(req, id)
 
+    // req parametresini geç
     // 404
     _ -> not_found_page()
   }
@@ -72,10 +77,70 @@ fn dolls_list_page() -> Response(wisp.Body) {
   render_page("Dolls", content, router.AllDolls)
 }
 
-fn doll_page(id: String) -> Response(wisp.Body) {
-  let doll_model = doll_page.init(id)
+fn get_skin_param(req: wisp.Request) -> option.Option(String) {
+  request.get_query(req)
+  |> result.map(fn(params) {
+    list.find_map(params, fn(param) {
+      case param {
+        #("skin", value) -> Ok(value)
+        _ -> Error(Nil)
+      }
+    })
+    |> option.from_result()
+  })
+  |> result.unwrap(option.None)
+}
+
+fn get_interaction_param(req: wisp.Request) -> Bool {
+  let param_opt =
+    request.get_query(req)
+    |> result.map(fn(params) {
+      list.find_map(params, fn(param) {
+        case param {
+          #("interaction", value) -> Ok(value)
+          _ -> Error(Nil)
+        }
+      })
+      |> option.from_result()
+    })
+    |> result.unwrap(option.None)
+
+  case param_opt {
+    option.Some("true") -> True
+    _ -> False
+  }
+}
+
+fn get_live2d_param(req: wisp.Request) -> Bool {
+  let param_opt =
+    request.get_query(req)
+    |> result.map(fn(params) {
+      list.find_map(params, fn(param) {
+        case param {
+          #("live2d", value) -> Ok(value)
+          _ -> Error(Nil)
+        }
+      })
+      |> option.from_result()
+    })
+    |> result.unwrap(option.None)
+
+  case param_opt {
+    option.Some("true") -> True
+    _ -> False
+  }
+}
+
+fn doll_page(req: wisp.Request, id: String) -> Response(wisp.Body) {
+  let skin_id = get_skin_param(req)
+  let interaction = get_interaction_param(req)
+  let live2d = get_live2d_param(req)
+  let doll_model = doll_page.init(id, skin_id, interaction, live2d)
   let content = doll_page.view(doll_model)
-  let title = "Doll: " <> id
+  let title = case doll_model.doll {
+    option.Some(doll) -> "Doll " <> doll.name
+    option.None -> "Doll " <> id
+  }
   render_page(title, content, router.DollPage(id))
 }
 

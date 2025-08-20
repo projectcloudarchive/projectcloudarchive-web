@@ -71,6 +71,9 @@ fn dolls_decoder() -> decode.Decoder(List(Doll)) {
   decode.list(doll_decoder())
 }
 
+//
+// Fetch (a Strange way to do this)
+// 
 pub fn fetch_dolls_from_backend() -> Result(List(Doll), String) {
   case request.to("http://127.0.0.1:8000/dolls/") {
     Error(_) -> Error("Invalid URL")
@@ -221,9 +224,9 @@ pub fn view(model: Model) -> Element(msg) {
         option.None -> {
           case list.length(model.dolls) {
             0 -> render_empty_state()
-            count ->
+            _ ->
               html.div([a.class("space-y-8")], [
-                html.div([a.class("text-center mb-8")], [
+                html.div([a.class("text-center mb-8 gap-8 ")], [
                   html.span(
                     [
                       a.class(
@@ -231,7 +234,11 @@ pub fn view(model: Model) -> Element(msg) {
                       ),
                     ],
                     [
-                      text(string.inspect(count) <> "+" <> " DOLLS"),
+                      text(
+                        string.inspect(list.length(model.dolls))
+                        <> "+"
+                        <> " DOLLS",
+                      ),
                     ],
                   ),
                 ]),

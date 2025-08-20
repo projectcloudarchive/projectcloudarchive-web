@@ -38,7 +38,9 @@ pub fn footer_view(current_route: Route) -> Element(msg) {
                   a.src(
                     "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Gleam_Lucy.svg/1200px-Gleam_Lucy.svg.png",
                   ),
-                  a.class("w-10 h-10 hover:cursor-pointer"),
+                  a.class(
+                    "w-10 h-10 transform transition duration-300 hover:rotate-[25deg] hover:cursor-pointer",
+                  ),
                   a.alt("Gleam"),
                 ]),
               ]),
